@@ -1,0 +1,14 @@
+Add passenger
+http://localhost:8080/add?firstname=yue&lastname=yin&age=18&gender=male&phone=789
+
+Add flight
+http://localhost:8080/flight/add?flightNumber=1&price=120&origin=AA&to=BB&description=EE&capacity=100&model=HH&manufacturer=II&year=1997
+
+Add Reservation
+http://localhost:8080/reservation/add?passengerId=passenger-b93ce223-de02-4e0b-8ac3-b66c9973e564
+
+Get Reservation
+http://localhost:8080/reservation/get?reservationId=reservation761bb10c11ca4e5293342748a98a8e75
+
+Get Flight
+http://localhost:8080/flight/get?flightNumber=0
