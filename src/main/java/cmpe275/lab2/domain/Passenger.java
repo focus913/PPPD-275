@@ -1,5 +1,10 @@
 package cmpe275.lab2.domain;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+
 import javax.persistence.*;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,6 +36,12 @@ public class Passenger {
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "passengers")
     private List<Flight> flights = new LinkedList<>();
 
+    // private1
+    @OneToMany(mappedBy = "passenger")
+    @JacksonXmlElementWrapper(localName = "reservations")
+    @JacksonXmlProperty(localName = "reservation")
+    private List<Reservation> reservations = new LinkedList<>();
+
     public Passenger() {
         this.passengerId = "passenger" + UUID.randomUUID().toString().replaceAll("-", "");
     }
@@ -39,6 +50,7 @@ public class Passenger {
         this.passengerId = id;
     }
 
+    @JsonView(Views.Public.class)
     public String getPassengerId() {
         return passengerId;
     }
@@ -47,6 +59,7 @@ public class Passenger {
         this.firstName = firstName;
     }
 
+    @JsonView(Views.Public.class)
     public String getFirstName() {
         return firstName;
     }
@@ -55,6 +68,7 @@ public class Passenger {
         this.lastName = lastName;
     }
 
+    @JsonView(Views.Public.class)
     public String getLastName() {
         return lastName;
     }
@@ -63,6 +77,7 @@ public class Passenger {
         this.age = age;
     }
 
+    @JsonView(Views.Public.class)
     public int getAge() {
         return age;
     }
@@ -71,6 +86,7 @@ public class Passenger {
         this.gender = gender;
     }
 
+    @JsonView(Views.Public.class)
     public String getGender() {
         return gender;
     }
@@ -79,7 +95,17 @@ public class Passenger {
         this.phone = phone;
     }
 
+    @JsonView(Views.Public.class)
     public String getPhone() {
         return phone;
+    }
+
+    @JsonView(Views.Private1.class)
+    public List<Reservation> getReservations() {
+        return reservations;
+    }
+
+    public void setReservations(List<Reservation> reservations) {
+        this.reservations = reservations;
     }
 }

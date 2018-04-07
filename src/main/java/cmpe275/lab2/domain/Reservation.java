@@ -1,5 +1,10 @@
 package cmpe275.lab2.domain;
 
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+
 import javax.persistence.*;
 import java.util.LinkedList;
 import java.util.List;
@@ -7,12 +12,13 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "reservation")
+@JacksonXmlRootElement(localName = "reservation")
 public class Reservation {
     @Id
     @Column(name = "reservation_id")
-    private String reservationId;
+    private String reservationNumber;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "passenger_id")
     private Passenger passenger;
 
@@ -20,20 +26,25 @@ public class Reservation {
     @JoinTable(name = "reservation_to_flight",
                joinColumns = { @JoinColumn(name = "reservation_id")},
                inverseJoinColumns = {@JoinColumn(name = "flight_number")})
+    @JacksonXmlElementWrapper(localName = "flights")
+    @JacksonXmlProperty(localName = "flight")
     private List<Flight> flights = new LinkedList<>();
 
-    public String getReservationId() {
-        return reservationId;
+    @JsonView(Views.Public.class)
+    public String getReservationNumber() {
+        return reservationNumber;
     }
 
     public void setPassenger(Passenger passenger) {
         this.passenger = passenger;
     }
 
+    @JsonView(Views.Private2.class)
     public Passenger getPassenger() {
         return passenger;
     }
 
+    @JsonView(Views.Public.class)
     public List<Flight> getFlights() {
         return flights;
     }
@@ -43,6 +54,6 @@ public class Reservation {
     }
 
     public Reservation() {
-        this.reservationId = "reservation" + UUID.randomUUID().toString().replaceAll("-", "");
+        this.reservationNumber = "reservation" + UUID.randomUUID().toString().replaceAll("-", "");
     }
 }

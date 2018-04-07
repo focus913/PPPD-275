@@ -12,3 +12,6 @@ http://localhost:8080/reservation/get?reservationId=reservation761bb10c11ca4e529
 
 Get Flight
 http://localhost:8080/flight/get?flightNumber=0
+
+Get Passenger
+http://localhost:8080/get?passengerId=

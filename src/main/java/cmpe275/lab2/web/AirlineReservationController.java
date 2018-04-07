@@ -5,6 +5,9 @@ import java.util.Optional;
 
 import cmpe275.lab2.domain.*;
 import cmpe275.lab2.service.*;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +29,10 @@ public class AirlineReservationController {
     @Autowired
     private FlightToPassengerRepository flightToPassengerRepository;
 
+    /*public @ResponseBody Passenger getPassenger() {
+
+    }*/
+
     @GetMapping(path = "/add")
     public @ResponseBody String addPassenger(
             @RequestParam String firstname,
@@ -43,6 +50,15 @@ public class AirlineReservationController {
         return "Saved";
     }
 
+    @GetMapping(path = "/get")
+    @JsonView(Views.Private1.class)
+    public @ResponseBody Passenger getPassenger(@RequestParam String passengerId) throws JsonProcessingException {
+        Passenger passenger =  passengerRepository.findByPassengerId(passengerId);
+        //ObjectMapper objectMapper = new ObjectMapper();
+        //return objectMapper.writerWithView(Views.Private1.class).writeValueAsString(passenger);
+        return passenger;
+    }
+
     @GetMapping(path = "/all")
     public @ResponseBody Iterable<Passenger> getAllPassengers() {
         return passengerRepository.findAll();
@@ -58,7 +74,7 @@ public class AirlineReservationController {
         for (int i = 0; i < 2; ++i) {
             ReservationToFlight reservationToFlight = new ReservationToFlight();
             reservationToFlight.setFlightNumber(String.valueOf(i));
-            reservationToFlight.setReservationId(reservation.getReservationId());
+            reservationToFlight.setReservationId(reservation.getReservationNumber());
             reservationToFlightRepository.save(reservationToFlight);
             FlightToPassenger flightToPassenger = new FlightToPassenger();
             flightToPassenger.setFlightNumber(String.valueOf(i));
@@ -70,6 +86,7 @@ public class AirlineReservationController {
 
     @GetMapping(path = "/reservation/get")
     public @ResponseBody
+    @JsonView(Views.Private2.class)
     Optional<Reservation> getReservation(@RequestParam String reservationId) {
         return reservationRepository.findById(reservationId);
     }
@@ -107,6 +124,7 @@ public class AirlineReservationController {
     }
 
     @GetMapping(path = "/flight/get")
+    @JsonView(Views.Private3.class)
     public @ResponseBody Optional<Flight> getFlight(@RequestParam String flightNumber) {
         return flightRepository.findById(flightNumber);
     }

@@ -1,5 +1,9 @@
 package cmpe275.lab2.domain;
 
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+
 import javax.persistence.*;
 import java.sql.Date;
 import java.util.LinkedList;
@@ -44,8 +48,11 @@ public class Flight {
     @JoinTable(name = "flight_to_passenger",
                 joinColumns = { @JoinColumn(name = "flight_number")},
                 inverseJoinColumns = { @JoinColumn(name = "passenger_id")})
+    @JacksonXmlElementWrapper(localName = "passengers")
+    @JacksonXmlProperty(localName = "passenger")
     private List<Passenger> passengers = new LinkedList<>();
 
+    @JsonView(Views.Public.class)
     public Date getArrivalTime() {
         return arrivalTime;
     }
@@ -54,6 +61,7 @@ public class Flight {
         this.arrivalTime = arrivalTime;
     }
 
+    @JsonView(Views.Public.class)
     public Date getDepartureTime() {
         return departureTime;
     }
@@ -62,6 +70,7 @@ public class Flight {
         this.departureTime = departureTime;
     }
 
+    @JsonView(Views.Public.class)
     public double getPrice() {
         return price;
     }
@@ -70,30 +79,37 @@ public class Flight {
         this.price = price;
     }
 
+    @JsonView(Views.Public.class)
     public int getSeatsLeft() {
         return seatsLeft;
     }
 
+    @JsonView(Views.Private3.class)
     public List<Passenger> getPassengers() {
         return passengers;
     }
 
+    @JsonView(Views.Public.class)
     public Plane getPlane() {
         return plane;
     }
 
+    @JsonView(Views.Public.class)
     public String getDescription() {
         return description;
     }
 
+    @JsonView(Views.Public.class)
     public String getFlightNumber() {
         return flightNumber;
     }
 
+    @JsonView(Views.Public.class)
     public String getOrigin() {
         return origin;
     }
 
+    @JsonView(Views.Public.class)
     public String getTo() {
         return to;
     }

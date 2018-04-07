@@ -1,5 +1,7 @@
 package cmpe275.lab2.domain;
 
+import com.fasterxml.jackson.annotation.JsonView;
+
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
@@ -17,18 +19,22 @@ public class Plane {
     @Column(name = "year", nullable = false)
     private int year;
 
+    @JsonView(Views.Public.class)
     public int getCapacity() {
         return capacity;
     }
 
+    @JsonView(Views.Public.class)
     public int getYear() {
         return year;
     }
 
+    @JsonView(Views.Public.class)
     public String getManufacturer() {
         return manufacturer;
     }
 
+    @JsonView(Views.Public.class)
     public String getModel() {
         return model;
     }
