@@ -50,13 +50,17 @@ public class AirlineReservationController {
         return "Saved";
     }
 
-    @GetMapping(path = "/get")
+    @GetMapping(path = "/get", produces = {"application/json", "application/xml"})
     @JsonView(Views.Private1.class)
     public @ResponseBody Passenger getPassenger(@RequestParam String passengerId) throws JsonProcessingException {
-        Passenger passenger =  passengerRepository.findByPassengerId(passengerId);
+        Optional<Passenger> passenger =  passengerRepository.findById(passengerId);
         //ObjectMapper objectMapper = new ObjectMapper();
         //return objectMapper.writerWithView(Views.Private1.class).writeValueAsString(passenger);
-        return passenger;
+        if (!passenger.isPresent()) {
+            String errMsg = "Sorry, the requested passenger with id " + passengerId + " does not exist";
+            throw new PassengerNotExistException(errMsg);
+        }
+        return passenger.get();
     }
 
     @GetMapping(path = "/all")
@@ -68,7 +72,7 @@ public class AirlineReservationController {
     public @ResponseBody String addReservation(
             @RequestParam String passengerId) {
         Reservation reservation = new Reservation();
-        Passenger passenger = passengerRepository.findByPassengerId(passengerId);
+        Passenger passenger = passengerRepository.findById(passengerId).get();
         reservation.setPassenger(passenger);
         reservationRepository.save(reservation);
         for (int i = 0; i < 2; ++i) {

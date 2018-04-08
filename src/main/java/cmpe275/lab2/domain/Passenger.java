@@ -51,6 +51,7 @@ public class Passenger {
     }
 
     @JsonView(Views.Public.class)
+    @JsonProperty("id")
     public String getPassengerId() {
         return passengerId;
     }
