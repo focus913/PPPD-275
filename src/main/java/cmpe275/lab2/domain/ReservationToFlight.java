@@ -1,5 +1,7 @@
 package cmpe275.lab2.domain;
 
+import org.springframework.web.bind.annotation.ControllerAdvice;
+
 import javax.persistence.*;
 
 @Entity
@@ -14,6 +16,17 @@ public class ReservationToFlight {
 
     @Column(name = "flight_number")
     private String flightNumber;
+
+    @Column(name = "price")
+    private double price;
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public double getPrice() {
+        return price;
+    }
 
     public String getFlightNumber() {
         return flightNumber;

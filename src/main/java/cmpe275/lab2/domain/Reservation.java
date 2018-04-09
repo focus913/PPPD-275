@@ -6,6 +6,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
 import javax.persistence.*;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +30,16 @@ public class Reservation {
     @JacksonXmlElementWrapper(localName = "flights")
     @JacksonXmlProperty(localName = "flight")
     private List<Flight> flights = new LinkedList<>();
+
+    private double price;
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public double getPrice() {
+        return price;
+    }
 
     @JsonView(Views.Public.class)
     public String getReservationNumber() {

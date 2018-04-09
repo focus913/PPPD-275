@@ -41,7 +41,7 @@ public class Flight {
     @Embedded
     private Plane plane;
 
-    @ManyToMany(mappedBy = "flights")
+    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "flights")
     private List<Reservation> reservations = new LinkedList();
 
     @ManyToMany(fetch = FetchType.LAZY)

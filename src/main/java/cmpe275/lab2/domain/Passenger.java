@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
 import javax.persistence.*;
 import java.util.LinkedList;
@@ -13,6 +14,7 @@ import java.util.UUID;
 @Entity
 @Embeddable
 @Table(name = "passenger")
+@JacksonXmlRootElement(localName = "passenger")
 public class Passenger {
     @Id
     @Column(name = "passenger_id")
@@ -37,7 +39,7 @@ public class Passenger {
     private List<Flight> flights = new LinkedList<>();
 
     // private1
-    @OneToMany(mappedBy = "passenger")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "passenger")
     @JacksonXmlElementWrapper(localName = "reservations")
     @JacksonXmlProperty(localName = "reservation")
     private List<Reservation> reservations = new LinkedList<>();
@@ -61,6 +63,7 @@ public class Passenger {
     }
 
     @JsonView(Views.Public.class)
+    @JsonProperty("firstname")
     public String getFirstName() {
         return firstName;
     }
@@ -70,6 +73,7 @@ public class Passenger {
     }
 
     @JsonView(Views.Public.class)
+    @JsonProperty("lastname")
     public String getLastName() {
         return lastName;
     }
