@@ -1,5 +1,6 @@
 package cmpe275.lab2.domain;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
 import javax.persistence.*;
@@ -42,5 +43,14 @@ public class ReservationToFlight {
 
     public void setReservationId(String reservationId) {
         this.reservationId = reservationId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof  ReservationToFlight)) {
+            return false;
+        }
+        ReservationToFlight other = (ReservationToFlight)o;
+        return reservationId.equals(other.reservationId) && flightNumber.equals(other.flightNumber);
     }
 }

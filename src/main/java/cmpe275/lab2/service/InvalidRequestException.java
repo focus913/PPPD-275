@@ -3,7 +3,7 @@ package cmpe275.lab2.service;
 public class InvalidRequestException extends RuntimeException {
     private String msg;
 
-    InvalidRequestException(String msg) {
+    public InvalidRequestException(String msg) {
         this.msg = msg;
     }
 
