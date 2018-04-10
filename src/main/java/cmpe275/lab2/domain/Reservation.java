@@ -31,12 +31,14 @@ public class Reservation {
     @JacksonXmlProperty(localName = "flight")
     private List<Flight> flights = new LinkedList<>();
 
+    @Column(name = "price")
     private double price;
 
     public void setPrice(double price) {
         this.price = price;
     }
 
+    @JsonView(Views.Public.class)
     public double getPrice() {
         return price;
     }

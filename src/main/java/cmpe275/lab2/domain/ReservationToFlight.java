@@ -9,7 +9,7 @@ import javax.persistence.*;
 @Table(name = "reservation_to_flight")
 public class ReservationToFlight {
 
-    @Id @GeneratedValue
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @Column(name = "reservation_id")

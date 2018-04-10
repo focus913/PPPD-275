@@ -7,7 +7,7 @@ import javax.persistence.*;
 public class FlightToPassenger {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @Column(name = "flight_number")

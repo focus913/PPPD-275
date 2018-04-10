@@ -2,12 +2,13 @@ package cmpe275.lab2.service;
 
 import cmpe275.lab2.domain.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.transaction.Transactional;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.*;
 
+@Component("AirlineReservationService")
 public class AirlineReservationService {
     @Autowired
     PassengerRepository passengerRepository;
@@ -118,8 +119,20 @@ public class AirlineReservationService {
             }
         }
 
-        // 2. Check time conflict
+        // 2. Check time conflict for new flights
         checkConflict(flights);
+
+        // 3. Check time conflict for existed flights
+        Passenger passenger = getPassenger(passengerId);
+        Iterable<Reservation> reservations = reservationRepository.findAllByPassenger(passenger);
+        Iterator<Reservation> iterator = reservations.iterator();
+        List<Flight> existed = new LinkedList<>();
+        while (iterator.hasNext()) {
+            Reservation reservation = iterator.next();
+            existed.addAll(reservation.getFlights());
+        }
+        existed.addAll(flights);
+        checkConflict(existed);
 
         // 3. Check left seats for each flight
         for (Flight flight : flights) {
@@ -130,7 +143,6 @@ public class AirlineReservationService {
             flight.setSeatsLeft(flight.getSeatsLeft() - 1);
         }
 
-        Passenger passenger = getPassenger(passengerId);
         Reservation reservation = new Reservation();
         reservation.setPassenger(passenger);
         addFlightsToReservation(passengerId, reservation, flights);
@@ -149,18 +161,21 @@ public class AirlineReservationService {
                 throw new InvalidRequestException(
                         "Time conflict between " + pre.getFlightNumber() + " and " + cur.getFlightNumber());
             }
+            pre = cur;
         }
     }
 
-    @Transactional
     void addFlightsToReservation(
             String passengerId, Reservation reservation, List<Flight> flights) {
+        if (null == flights || flights.isEmpty()) {
+            return;
+        }
         List<ReservationToFlight> reservationToFlights = new LinkedList<>();
         List<FlightToPassenger> flightToPassengers = new LinkedList<>();
         getOperatingEntities(
                 passengerId, reservation, flights,
                 reservationToFlights, flightToPassengers);
-        flightRepository.saveAll(flights);
+        //flightRepository.saveAll(flights);
         reservationToFlightRepository.saveAll(reservationToFlights);
         flightToPassengerRepository.saveAll(flightToPassengers);
         reservationRepository.save(reservation);
@@ -186,15 +201,24 @@ public class AirlineReservationService {
     @Transactional
     void deleteFlightsFromReservation(
             String passengerId, Reservation reservation, List<Flight> flights) {
+        if (null == flights || flights.isEmpty()) {
+            return;
+        }
         List<ReservationToFlight> reservationToFlights = new LinkedList<>();
         List<FlightToPassenger> flightToPassengers = new LinkedList<>();
         getOperatingEntities(
                 passengerId, reservation, flights,
                 reservationToFlights, flightToPassengers);
-        flightRepository.saveAll(flights);
-        reservationToFlightRepository.deleteAll(reservationToFlights);
-        flightToPassengerRepository.deleteAll(flightToPassengers);
-        reservationRepository.delete(reservation);
+
+        //flightRepository.saveAll(flights);
+        for (ReservationToFlight rf : reservationToFlights) {
+            reservationToFlightRepository.
+                    deleteByFlightNumberAndReservationId(rf.getFlightNumber(), rf.getReservationId());
+        }
+        for (FlightToPassenger fp : flightToPassengers) {
+            flightToPassengerRepository.
+                    deleteByFlightNumberAndPassengerId(fp.getFlightNumber(), fp.getPassengerId());
+        }
     }
 
     @Transactional
@@ -203,21 +227,26 @@ public class AirlineReservationService {
         Reservation reservation = getReservation(reservationNumber);
         // 1. Check removed flights
         List<Flight> toRemove = new LinkedList<>();
+        List<String> existedFlightNumber = new LinkedList<>();
         Iterator<Flight> iterator = reservation.getFlights().iterator();
         while (iterator.hasNext()) {
             Flight flight = iterator.next();
-            if (flightsRemoved.indexOf(flight.getFlightNumber()) != -1) {
-                toRemove.add(flight);
-                iterator.remove();
-            } else {
-                throw new FlightNotExistException(
-                        "Flight " + flight.getFlightNumber() + " does not exist in current reservation");
+            existedFlightNumber.add(flight.getFlightNumber());
+        }
+        if (null != flightsRemoved) {
+            for (String needRemove : flightsRemoved) {
+                if (existedFlightNumber.indexOf(needRemove) == -1) {
+                    throw new FlightNotExistException(
+                            "Flight " + needRemove + " does not exist in current reservation");
+                } else {
+                    toRemove.add(getFlight(needRemove));
+                }
             }
         }
 
         // 2. Check added flight
         iterator = reservation.getFlights().iterator();
-        while (iterator.hasNext()) {
+        while (iterator.hasNext() && null != flightsAdded) {
             Flight flight = iterator.next();
             if (flightsAdded.indexOf(flight.getFlightNumber()) != -1) {
                 throw new InvalidRequestException(
@@ -225,12 +254,22 @@ public class AirlineReservationService {
             }
         }
         List<Flight> toAdd = new LinkedList<>();
-        for(String addFlight : flightsAdded) {
-            toAdd.add(getFlight(addFlight));
+        List<Flight> allFlights = new LinkedList<>();
+        for (Flight flight : reservation.getFlights()) {
+            if (null == flightsRemoved ||
+                    flightsRemoved.indexOf(flight.getFlightNumber()) == -1) {
+                allFlights.add(flight);
+            }
         }
+        if (null != flightsAdded) {
+            for(String addFlight : flightsAdded) {
+                toAdd.add(getFlight(addFlight));
+            }
+        }
+        allFlights.addAll(toAdd);
 
         // 3. Check time conflict
-        checkConflict(toAdd);
+        checkConflict(allFlights);
 
         deleteFlightsFromReservation(
                 reservation.getPassenger().getPassengerId(), reservation, toRemove);
@@ -245,6 +284,7 @@ public class AirlineReservationService {
             Passenger passenger = getPassenger(passengerId);
             Iterable<Reservation> reservations =
                     reservationRepository.findAllByPassenger(passenger);
+            System.out.println("Step1");
             return filtReservation(reservations, null, origin, to, flightNumber);
         } else if (null != flightNumber && !flightNumber.isEmpty()) {
             Iterable<ReservationToFlight> reservationToFlights =
@@ -276,22 +316,29 @@ public class AirlineReservationService {
             Iterable<Reservation> reservations, String passengerId, String origin, String to, String flightNumber) {
         List<Reservation> ret = new LinkedList<>();
         for (Reservation reservation : reservations) {
-            boolean hasPassengerId = (null != passengerId &&
-                            !reservation.getPassenger().getPassengerId().equals(passengerId));
+            System.out.println(reservation.getReservationNumber());
+            boolean hasPassengerId = (null == passengerId ||
+                            reservation.getPassenger().getPassengerId().equals(passengerId));
 
             List<Flight> flights = reservation.getFlights();
             Set<String> origins = new HashSet<>();
             Set<String> tos = new HashSet<>();
             Set<String> flightNums = new HashSet<>();
             for (Flight flight : flights) {
+                System.out.println(flight.getOrigin());
+                System.out.println(flight.getTo());
+                System.out.println(flight.getFlightNumber());
                 origins.add(flight.getOrigin());
                 tos.add(flight.getTo());
                 flightNums.add(flight.getFlightNumber());
             }
-            boolean hasOrigin = (null != origin) && origins.contains(origin);
-            boolean hasTo = (null != to) && tos.contains(to);
-            boolean hasFlightNum = (null != flightNumber) && flightNums.contains(flightNumber);
-            if (!hasPassengerId && !hasOrigin && !hasTo && !hasFlightNum) {
+            boolean hasOrigin = (null == origin) || origins.contains(origin);
+            boolean hasTo = (null == to) || tos.contains(to);
+            boolean hasFlightNum = (null == flightNumber) || flightNums.contains(flightNumber);
+            if ((null != passengerId && !hasPassengerId)
+             || (null != origin && !hasOrigin)
+             || (null != to && !hasTo)
+             || (null != flightNumber && !hasFlightNum)) {
                 continue;
             }
             ret.add(reservation);
@@ -347,6 +394,7 @@ public class AirlineReservationService {
         flight.getPlane().setYear(year);
         flight.getPlane().setModel(model);
         flight.getPlane().setManufacturer(manufacuturer);
+        flight.getPlane().setCapacity(capacity);
         flight.setDescription(description);
         updateFlightInternal(flight);
     }
@@ -364,9 +412,12 @@ public class AirlineReservationService {
         flight.setDepartureTime(departureTime);
         flight.setArrivalTime(arrivalTime);
         flight.setSeatsLeft(capacity);
-        flight.getPlane().setYear(year);
-        flight.getPlane().setModel(model);
-        flight.getPlane().setManufacturer(manufacturer);
+        Plane plane = new Plane();
+        plane.setManufacturer(manufacturer);
+        plane.setModel(model);
+        plane.setYear(year);
+        plane.setCapacity(capacity);
+        flight.setPlane(plane);
         flight.setDescription(description);
 
         flightRepository.save(flight);
@@ -376,7 +427,7 @@ public class AirlineReservationService {
     @Transactional
     public void deleteFlight(String flightNumber) {
         Flight flight = getFlight(flightNumber);
-        if (flight.getSeatsLeft() != 0) {
+        if (flight.getSeatsLeft() != flight.getPlane().getCapacity()) {
             throw new InvalidRequestException("Flight is reserved");
         }
         flightRepository.deleteById(flightNumber);
@@ -408,8 +459,8 @@ public class AirlineReservationService {
                     flightNumber,
                     reservation.getPassenger().getPassengerId());
             // Delete Reservation to Flight mapping
-            reservationToFlightRepository.
-                    deleteAllByReservationIdAndFlightNumber(reservation.getReservationNumber(), flightNumber);
+            //reservationToFlightRepository.
+             //       deleteByReservationIdAndFlightNumber(reservation.getReservationNumber(), flightNumber);
             flight.setSeatsLeft(flight.getSeatsLeft() + 1);
             flightRepository.save(flight);
         }
@@ -419,6 +470,6 @@ public class AirlineReservationService {
     @Transactional
     void deletePassengerFromFlight(String flightNumber, String passengerId) {
         flightToPassengerRepository.
-                deleteAllByFlightNumberAndPassengerId(flightNumber, passengerId);
+                deleteByFlightNumberAndPassengerId(flightNumber, passengerId);
     }
 }
