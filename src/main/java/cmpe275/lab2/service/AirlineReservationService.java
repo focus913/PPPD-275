@@ -176,9 +176,9 @@ public class AirlineReservationService {
                 passengerId, reservation, flights,
                 reservationToFlights, flightToPassengers);
         //flightRepository.saveAll(flights);
+        reservationRepository.save(reservation);
         reservationToFlightRepository.saveAll(reservationToFlights);
         flightToPassengerRepository.saveAll(flightToPassengers);
-        reservationRepository.save(reservation);
     }
 
     private void getOperatingEntities(
